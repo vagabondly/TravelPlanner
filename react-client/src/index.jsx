@@ -18,30 +18,34 @@ class App extends React.Component {
     this.state = {
       user: null,
       trips: [],
+      editing: 'NEW',
       page: pages.LANDING,
       drawerIsOpen: false,
     };
     this.logIn = this.logIn.bind(this);
     this.changePage = this.changePage.bind(this);
-    this.createToView = this.createToView.bind(this);
     this.handleDrawerToggle = this.handleDrawerToggle.bind(this);
     this.handleDrawerClose = this.handleDrawerClose.bind(this);
     this.setDrawerState = this.setDrawerState.bind(this);
   }
 
   createToView(trips, page) {
-    console.log('trips being sent: ', trips);
-    console.log('page being redirected: ', page);
     this.setState({
       trips: trips,
       page: page
     });
   }
 
-  changePage(page) {
-    this.setState({
-      page
-    });
+  changePage(page, options={}) {
+    let stateChange = {
+      page: page
+    };
+
+    for (let key in options) {
+      stateChange[key] = options[key];
+    }
+
+    this.setState(stateChange);
   }
 
   logIn(user) {
@@ -69,18 +73,17 @@ class App extends React.Component {
     this.setState({
       drawerIsOpen: !this.state.drawerIsOpen
     });
-  } 
+  }
 
   handleDrawerClose() {
     console.log('hello')
     this.setState({
       drawerIsOpen: false
     });
-  } 
+  }
 
   setDrawerState(status) {
-    this.setState({
-      drawerIsOpen: status
+    this.setState({ drawerIsOpen: status
     });
   }
 
@@ -95,6 +98,7 @@ class App extends React.Component {
               <Navbar
                 changePage={this.changePage}
                 user={this.state.user}
+                page={this.state.page}
               />
               { this.getMainComponent() }
             </div>
@@ -126,15 +130,16 @@ class App extends React.Component {
       case pages.LANDING:
         return <Landing changePage={this.changePage} />
       case pages.CREATE:
-        return <CreateView 
-          createToView={this.createToView}
+        return <CreateView
+          changePage={this.changePage}
           handleDrawerToggle={this.handleDrawerToggle}
           handleDrawerClose={this.handleDrawerClose}
           drawerIsOpen={this.state.drawerIsOpen}
           user={this.state.user}
+          editing={this.state.editing}
         />
       case pages.LIST:
-        return <ViewTrips 
+        return <ViewTrips
           changePage={this.changePage}
           user={this.state.user}
           trips={this.state.trips}

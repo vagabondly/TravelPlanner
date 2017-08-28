@@ -34,6 +34,20 @@ class CreateView extends React.Component {
         destination: '',
       }
     };
+
+    if (props.editing !== 'NEW') {
+      this.state.trip = props.editing;
+      Object.assign(
+        this.state.trip,
+        {
+          hotels: this.state.trip.lodging,
+          restaurants: this.state.trip.food
+        }
+      );
+      
+      this.state.searchText = props.editing.destination;
+    }
+
     this.addToTrip = this.addToTrip.bind(this);
     this.removeFromTrip = this.removeFromTrip.bind(this);
     this.handleNext = this.handleNext.bind(this);
@@ -42,9 +56,16 @@ class CreateView extends React.Component {
     this.handleUpdateInput = this.handleUpdateInput.bind(this);
     this.triggerLoading = this.triggerLoading.bind(this);
     this.handleTileClick = this.handleTileClick.bind(this);
+    this.updateCity = this.updateCity.bind(this);
     this.saveBox = this.saveBox.bind(this);
   }
-  
+
+  componentDidMount(){
+    if (this.props.editing !== 'NEW') {
+      this.updateCity();
+    }
+  }
+
   copyObject(object) {
     let tripData = {
       1: 'hotels',
@@ -128,6 +149,24 @@ class CreateView extends React.Component {
     });
   };
 
+  updateCity() {
+    this.triggerLoading();
+    const endpoints = ['/hotels', '/attractions', '/food'];
+    for (var i = 0; i < endpoints.length; i++) {
+      $.ajax({
+        url: endpoints[i],
+        type: 'GET',
+        data: {location: this.state.searchText},
+        success: (data) => {
+          this.leverageData(data);
+        },
+        error: (err) => {
+          console.log('error: ', err);
+        }
+      });
+    }
+  }
+
   leverageData(data) {
     console.log(data.tag, data.data);
 
@@ -200,7 +239,7 @@ class CreateView extends React.Component {
       dialogBox = (
         <SaveBox
           destination={this.state.searchText}
-          createToView={this.props.createToView}
+          changePage={this.props.changePage}
           open={this.state.saveBox}
           toggle={this.saveBox}
           trip={this.state.trip}

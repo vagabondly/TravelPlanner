@@ -35,40 +35,62 @@ app.get('/food', (req, res) => {
 
 app.post('/save', (req, res) => {
   var data = req.body;
-  console.log(data.id);
   var facebookId = data.facebookId;
   var tripId = data.id;
-  let newTrip = new Trip;
-  newTrip.id = data.id;
-  newTrip.food = data.food;
-  newTrip.attractions = data.attractions;
-  newTrip.lodging = data.lodging;
-  newTrip.destination = data.destination;
-  newTrip.name = data.name;
-  newTrip.description = data.description;
-  newTrip.save(err => {
-  if (err) {
-    throw err;
-  } else {
-    console.log('Data successfully saved');
-    }
-  }).then(() => {
-  User.findOne({facebookId})
+
+  Trip.findOne({id: tripId})
+    .then((trip) => {
+      if (trip) {
+        return trip;
+      } else {
+        return new Trip();
+      }
+    })
+    .then((trip) => {
+      trip.id = data.id;
+      trip.food = data.food;
+      trip.attractions = data.attractions;
+      trip.lodging = data.lodging;
+      trip.destination = data.destination;
+      trip.name = data.name;
+      trip.description = data.description;
+      trip.hidden = false;
+      return trip.save()
+    })
+    .then(() => {
+      return User.findOne({facebookId});
+    })
     .then((user) => {
       return user.addTripId(tripId);
-    }).then((user) => {
+    })
+    .then((user) => {
       Trip.getTrips(user, (fullUser) => {
-        res.status(200).send(fullUser);
+        res.status(201).send(fullUser);
       });
+    })
+    .catch((err) => {
+      console.log(err);
     });
-  });
 });
 
+app.post('/removeTrip', (req, res) => {
+
+  Trip.update({id: req.body.tripID}, {hidden: true})
+    .then( (result) => {
+      User.findOne({facebookId: req.body.facebookID})
+      .then( (user) => {
+        Trip.getTrips(user, (fullUser) => {
+          res.status(201).send(fullUser);
+        });
+      });
+    });
+
+});
 
 
 // When we want to find multiple values at once in Mongo, we can use the following command:
 
-// To grab the trips array from the user, we can use code similar to the following:  
+// To grab the trips array from the user, we can use code similar to the following:
 //   db.users.findOne({facebookId: "3713212263907"}).trips
 //   db.trips.find({"id" : {"$in" : [634827565, 14978997, 954501575]}})
 
